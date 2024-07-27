@@ -190,9 +190,9 @@ def ap_mode(ssid, password):
                   username = variables[1]
                   if version == "1":
                       password = variables[2]
-                      response = "" # account edit page, can create new account
+                      response = "1" # account edit page, can create new account
                   else:
-                      response = "" # view raw account, can't create
+                      response = "0" # view raw account, can't create
               except Exception as e:
                   response = "Error: Mistyped Address"
                   print(e)
