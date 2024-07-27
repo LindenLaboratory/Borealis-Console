@@ -113,8 +113,89 @@ def ap_mode(ssid, password):
       if sitedir == "/log":
           with open("log.txt","r") as f:
               response = "".join(f.readlines())
-      elif "/account?n=" in sitedir:
-          name = sitedir.split("/account?n=")[1]
+      elif "/account" in sitedir:
+          if name == "/account":
+              response = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Nunito', sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .input-box {
+            margin: 10px 0;
+            padding: 10px;
+            width: 200px;
+            border: 1px solid #555;
+            border-radius: 5px;
+            background-color: #1e1e1e;
+            color: #ffffff;
+            font-family: 'Nunito', sans-serif;
+        }
+        .button {
+            margin: 10px 0;
+            padding: 10px;
+            width: 200px;
+            border: none;
+            border-radius: 5px;
+            background-color: #6200ee;
+            color: #ffffff;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+        }
+        .button:hover {
+            background-color: #3700b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <input id="username" class="input-box" type="text" placeholder="Username">
+        <input id="password" class="input-box" type="password" placeholder="Password">
+        <button class="button" onclick="login()">Login</button>
+    </div>
+    <script>
+        function login() {
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+            var url = '/account?u=' + encodeURIComponent(username) + '&p=' + encodeURIComponent(password);
+            window.location.href = url;
+        }
+    </script>
+</body>
+</html>
+"""
+          else:
+              try:
+                  variables = name.split("?")[1].split("&")
+                  variables = [var.split("=")[1] for var in variables]
+                  version = variables[0]
+                  username = variables[1]
+                  if version == "1":
+                      password = variables[2]
+                      response = "" # account edit page, can create new account
+                  else:
+                      response = "" # view raw account, can't create
+              except Exception as e:
+                  response = "Error: Mistyped Address"
+                  print(e)
       else:
           response = str(len(addrlst))+".:"+str(timestamp)+".:"+htmlcontent
       print(response)
