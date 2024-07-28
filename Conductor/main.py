@@ -9,12 +9,22 @@ from machine import Pin
 import json
 #SETUP
 addrlst = []
+responses = []
+amounts = []
+money = ""
 with open("settings.txt","r") as f: 
     NAME = f.readline().strip()
 with open('commands.txt',"r") as f:
     commands = f.readlines()
 FEEDBACK = True
 #FUNCTIONS
+def getdata(username):
+    with open("accounts.csv","r") as f:
+        lines = f.readlines()
+        for i in lines:
+            parts = i.replace("\n","").split(",")
+            if parts[0] == username:
+                return parts[1],parts[2],parts[3],parts[4]
 def execute(string):
     dictionary = eval(string)
     def log(dictionary):
@@ -114,7 +124,7 @@ def ap_mode(ssid, password):
           with open("log.txt","r") as f:
               response = "".join(f.readlines())
       elif "/account" in sitedir:
-          if name == "/account":
+          if sitedir == "/account":
               response = """
 <!DOCTYPE html>
 <html lang="en">
@@ -175,7 +185,7 @@ def ap_mode(ssid, password):
         function login() {
             var username = document.getElementById('username').value;
             var password = document.getElementById('password').value;
-            var url = '/account?u=' + encodeURIComponent(username) + '&p=' + encodeURIComponent(password);
+            var url = '/account?v=1&u=' + encodeURIComponent(username) + '&p=' + encodeURIComponent(password);
             window.location.href = url;
         }
     </script>
@@ -184,27 +194,46 @@ def ap_mode(ssid, password):
 """
           else:
               try:
-                  variables = name.split("?")[1].split("&")
+                  variables = sitedir.split("?")[1].split("&")
                   variables = [var.split("=")[1] for var in variables]
                   version = variables[0]
                   username = variables[1]
                   if version == "1":
                       password = variables[2]
-                      response = "1" # account edit page, can create new account
+                      with open("accounts.csv","r") as f:
+                          txt="".join(f.readlines())
+                          if username in txt:
+                              password_,money,responses,amounts=getdata(username)
+                              if password_ != password:
+                                  response = "Error: Incorrect Password"
+                          else:
+                              responses = ["Message "+str(i) for i in range(1,11)]
+                              amounts = [str(i)+".00" for i in range(1,11)]
+                              money = "2.40"
+                              with open("accounts.csv","a") as f:
+                                  responses = ":.".join(responses)
+                                  amounts = ":.".join(amounts)
+                                  f.write(f"{username},{password},{money},{responses},{amounts}")
+                      if response != "Error: Incorrect Password":
+                          response = "1" # show account details, allow to edit
                   else:
-                      response = "0" # view raw account, can't create
+                      password_,money,responses,amounts=getdata(username)
+                      response = f"{money}\n"+responses.replace(":.","\n")+"\n"+amounts.replace(":.","\n")
               except Exception as e:
                   response = "Error: Mistyped Address"
                   print(e)
       else:
           response = str(len(addrlst))+".:"+str(timestamp)+".:"+htmlcontent
       print(response)
-      responsefinal = f"""\
+      if "</html>" not in response:
+          responsefinal = f"""\
 HTTP/1.1 200 OK\r
 Content-Type: text/plain\r
 Content-Length: {len(response)}\r
 \r
 {response}"""
+      else:
+          responsefinal = response
       conn.send(responsefinal.encode('utf-8'))
       conn.close()
 #MAINLOOP
