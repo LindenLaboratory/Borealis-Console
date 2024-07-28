@@ -215,7 +215,106 @@ def ap_mode(ssid, password):
                                   amounts = ":.".join(amounts)
                                   f.write(f"{username},{password},{money},{responses},{amounts}")
                       if response != "Error: Incorrect Password":
-                          response = "1" # show account details, allow to edit
+                          response = """
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Ebony Notepad</title>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Maven+Pro&display=swap">
+        <style>
+            body {
+                background-color: #444;
+                color: #fff;
+                font-family: 'Maven Pro', sans-serif;
+                display: flex;
+            }
+
+            #notepad {
+                width: 75%;
+                height: 90vh;
+                border: none;
+                outline: none;
+                resize: none;
+                background-color: #333;
+                color: #fff;
+                padding: 20px;
+                font-size: 20px;
+            }
+
+            #taskbar {
+                flex-grow: 1;
+                display: flex;
+                background-color: #555;
+                padding: 20px;
+                margin-left: 10px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            #title {
+                font-family: 'Maven Pro', sans-serif;
+                flex: 1 1 calc(100% - 10px);
+                height: 50px;
+                padding: 10px;
+                font-size: 16px;
+                background-color: #555;
+                color: #fff;
+                border: none;
+                outline: none;
+            }
+
+            #save-btn {
+                font-family: 'Maven Pro', sans-serif;
+                flex: 1 1 calc(50% - 5px);
+                height: 50px;
+                padding: 10px 20px;
+                font-size: 16px;
+                background-color: #262626;
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <textarea id="notepad" placeholder="Start typing...">{text}</textarea>
+        <div id="taskbar">
+            <input type="text" id="title" placeholder="Enter a title..." value="{title}">
+            <button id="save-btn">Save</button>
+        </div>
+        <script>
+            document.getElementById("save-btn").addEventListener("click", function() {
+                var title = document.getElementById("title").value;
+                var content = document.getElementById("notepad").value;
+
+                // Create a new XMLHttpRequest object
+                var xhr = new XMLHttpRequest();
+
+                // Configure the request
+                xhr.open("POST", "/save", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+
+                // Define the data to be sent
+                var data = JSON.stringify({ title: title, content: content });
+
+                // Handle the response
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                        // Handle the response from the Flask route
+                        var response = JSON.parse(xhr.responseText);
+                        console.log(response);
+                    }
+                };
+
+                // Send the request with the data
+                xhr.send(data);
+            });
+        </script>
+    </body>
+</html>
+"""
                   else:
                       password_,money,responses,amounts=getdata(username)
                       response = f"{money}\n"+responses.replace(":.","\n")+"\n"+amounts.replace(":.","\n")
