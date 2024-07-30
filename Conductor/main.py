@@ -7,53 +7,81 @@ import connect as __
 import _thread
 from machine import Pin
 import json
+
 #SETUP
 addrlst = []
+accounts = []
 responses = []
 amounts = []
 money = ""
-with open("settings.txt","r") as f: 
+
+with open("settings.txt", "r") as f:
     NAME = f.readline().strip()
-with open('commands.txt',"r") as f:
+
+with open('commands.txt', "r") as f:
     commands = f.readlines()
+
 FEEDBACK = True
+
 #FUNCTIONS
 def getdata(username):
-    with open("accounts.csv","r") as f:
+    with open("accounts.csv", "r") as f:
         lines = f.readlines()
         for i in lines:
-            parts = i.replace("\n","").split(",")
+            parts = i.replace("\n", "").split(",")
             if parts[0] == username:
-                return parts[1],parts[2],parts[3],parts[4]
+                return parts[1], parts[2], parts[3], parts[4]
+
 def execute(string):
     dictionary = eval(string)
+    
     def log(dictionary):
         if "log" in dictionary:
-            logstr=dictionary['log']
-            with open("log.txt","r") as f:
+            logstr = dictionary['log']
+            with open("log.txt", "r") as f:
                 lines = f.readlines()
                 if len(lines) < 100:
-                    with open("log.txt","a") as f:
+                    with open("log.txt", "a") as f:
                         f.write(logstr + "\n")
                 else:
-                    with open("log.txt","w") as f:
-                        f.write("".join(lines[1:])+logstr + "\n")
+                    with open("log.txt", "w") as f:
+                        f.write("".join(lines[1:]) + logstr + "\n")
             return "Data Logged"
         else:
             return "Data Logging Failed"
+    
     def command(dictionary):
         if "command" in dictionary:
-            commandstr=dictionary['command']
+            commandstr = dictionary['command']
             commands.append(commandstr)
             return "Command Added"
         else:
             return "Command Adding Failed"
+    
+    def account(dictionary):
+        if "account" in dictionary:
+            username = dictionary['account']
+            accounts[username] = addrlst[-1]
+            return "Account Connected"
+        else:
+            return "Account Connection Failed"
+            
     #ANALYSIS
+    account(dictionary)
     log(dictionary)
     command(dictionary)
+
 def encrypt(string):
     pause = False
-    chartable,newstring = {"a":"14","b":"15","c":"20","d":"21","e":"22","f":"23","g":"24","h":"25","i":"30","j":"31","k":"32","l":"33","m":"34","n":"35","o":"40","p":"41","q":"42","r":"43","s":"44","t":"45","u":"50","v":"51","w":"52","x":"53","y":"54","z":"55","0":"00","1":"01","2":"02","3":"03","4":"04","5":"05","6":"10","7":"11","8":"12","9":"13"," ":"  "},""
+    chartable = {
+        "a": "14", "b": "15", "c": "20", "d": "21", "e": "22", "f": "23",
+        "g": "24", "h": "25", "i": "30", "j": "31", "k": "32", "l": "33",
+        "m": "34", "n": "35", "o": "40", "p": "41", "q": "42", "r": "43",
+        "s": "44", "t": "45", "u": "50", "v": "51", "w": "52", "x": "53",
+        "y": "54", "z": "55", "0": "00", "1": "01", "2": "02", "3": "03",
+        "4": "04", "5": "05", "6": "10", "7": "11", "8": "12", "9": "13", " ": "  "
+    }
+    newstring = ""
     for char in string:
         try:
             newstring += chartable[char]
@@ -66,6 +94,7 @@ def encrypt(string):
             else:
                 newstring += "&" + char
     return newstring
+
 def terminate(seconds):
     global commands
     button = Pin(19, Pin.IN, Pin.PULL_UP)
@@ -78,54 +107,56 @@ def terminate(seconds):
         else:
             continue
         time.sleep(seconds)
+
 def web_page():
     global commands
-    html,timestamp,t__ = '','0',0
+    html, timestamp, t__ = '', '0', 0
     for command in commands:
         if not "timestamp" in command and not "=" in command:
-            html = html + encrypt(command.replace("\n","").replace("\r","")) + ";,"
+            html += encrypt(command.replace("\n", "").replace("\r", "")) + ";,"
         else:
             if "=" in command:
                 t__ = int(command.split("=")[-1])
             else:
-                timestamp_ = command.replace("\n","").replace("\r","").split(":.")[1]
-                timestamp = t__+int(timestamp_.split("t")[-1])
-    return html,timestamp
+                timestamp_ = command.replace("\n", "").replace("\r", "").split(":.")[1]
+                timestamp = t__ + int(timestamp_.split("t")[-1])
+    return html, timestamp
+
 def ap_mode(ssid, password):
     global addrlst, FEEDBACK
     ap = network.WLAN(network.AP_IF)
     ap.config(essid=ssid, password=password)
     ap.active(True)
-    while ap.active() == False:
+    while not ap.active():
         pass
     print('IP Address To Connect to:: http://' + ap.ifconfig()[0])
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(('', 80))
     s.listen(5)
     while True:
-      conn, addr = s.accept()
-      print('Got a connection from %s' % str(addr))
-      if str(addr).split(",")[0] not in addrlst:
-          addrlst.append(str(addr).split(",")[0])
-      request = conn.recv(1024)
-      print('Content = %s' % str(request))
-      if "Adafruit CircuitPython" in str(request) and "POST" in str(request):
-          if FEEDBACK:
-              string = "{" + str(request).split("GET")[-1].split("{")[-1][:-1]
-              print(string);execute(string)
-          FEEDBACK = not FEEDBACK
-      elif "Borealis Client" in str(request) and "POST" in str(request):
-          string = "{" + str(request).split("GET")[-1].split("{")[-1][:-1]
-          print(string);execute(string)
-      htmlcontent,timestamp = web_page()
-      sitedir = str(request).split(" HTTP/1.1")[0].split(" ")[1]
-      print(sitedir)
-      if sitedir == "/log":
-          with open("log.txt","r") as f:
-              response = "".join(f.readlines())
-      elif "/account" in sitedir:
-          if sitedir == "/account":
-              response = """
+        conn, addr = s.accept()
+        print('Got a connection from %s' % str(addr))
+        if str(addr).split(",")[0] not in addrlst:
+            addrlst.append(str(addr).split(",")[0])
+        request = conn.recv(1024)
+        print('Content = %s' % str(request))
+        if "Adafruit CircuitPython" in str(request) and "POST" in str(request):
+            if FEEDBACK:
+                string = "{" + str(request).split("GET")[-1].split("{")[-1][:-1]
+                print(string); execute(string)
+            FEEDBACK = not FEEDBACK
+        elif "Borealis Client" in str(request) and "POST" in str(request):
+            string = "{" + str(request).split("GET")[-1].split("{")[-1][:-1]
+            print(string); execute(string)
+        htmlcontent, timestamp = web_page()
+        sitedir = str(request).split(" HTTP/1.1")[0].split(" ")[1]
+        print(sitedir)
+        if sitedir == "/log":
+            with open("log.txt", "r") as f:
+                response = "".join(f.readlines())
+        elif "/account" in sitedir:
+            if sitedir == "/account":
+                response = """\
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -165,7 +196,7 @@ def ap_mode(ssid, password):
             width: 200px;
             border: none;
             border-radius: 5px;
-            background-color: #6200ee;
+            background-color: #262626;
             color: #ffffff;
             cursor: pointer;
             font-family: 'Nunito', sans-serif;
@@ -192,30 +223,55 @@ def ap_mode(ssid, password):
 </body>
 </html>
 """
-          else:
-              try:
-                  variables = sitedir.split("?")[1].split("&")
-                  variables = [var.split("=")[1] for var in variables]
-                  version = variables[0]
-                  username = variables[1]
-                  if version == "1":
-                      password = variables[2]
-                      with open("accounts.csv","r") as f:
-                          txt="".join(f.readlines())
-                          if username in txt:
-                              password_,money,responses,amounts=getdata(username)
-                              if password_ != password:
-                                  response = "Error: Incorrect Password"
-                          else:
-                              responses = ["Message "+str(i) for i in range(1,11)]
-                              amounts = [str(i)+".00" for i in range(1,11)]
-                              money = "2.40"
-                              with open("accounts.csv","a") as f:
-                                  responses = ":.".join(responses)
-                                  amounts = ":.".join(amounts)
-                                  f.write(f"{username},{password},{money},{responses},{amounts}")
-                      if response != "Error: Incorrect Password":
-                          response = """
+            elif sitedir == "/account/save":
+                print(str(request))
+                string = "{" + str(request).split("{")[-1][:-1]
+                dictionary = eval(string)
+                username = dictionary["title"]
+                text_ = dictionary["content"]
+                responses_,amounts_ = text_.split("\\n\\n")
+                responses,amounts=responses_.replace("\\n",":."),amounts_.replace("\\n",":.")
+                print(username, responses, amounts)
+                lines_=[]
+                with open("accounts.csv", "r") as f:
+                    lines = f.readlines()
+                    for line in lines:
+                        if password == line.split(",")[1]:
+                            lines_.append(f"{username},{password},{money},{responses},{amounts}\n")
+                        else:
+                            lines_.append(line)
+                    f.close()
+                with open("accounts.csv","w") as f:
+                    f.write("".join(lines_))
+                            
+                response = "Data saved successfully"
+            else:
+                try:
+                    variables = sitedir.split("?")[1].split("&")
+                    variables = [var.split("=")[1] for var in variables]
+                    version = variables[0]
+                    username = variables[1]
+                    if version == "1":
+                        password = variables[2]
+                        with open("accounts.csv", "r") as f:
+                            txt = "".join(f.readlines())
+                            if username in txt:
+                                password_, money, responses, amounts = getdata(username)
+                                if password_ != password:
+                                    response = "Error: Incorrect Password"
+                            else:
+                                responses = ["Message " + str(i) for i in range(1, 11)]
+                                amounts = [str(i) + ".00" for i in range(1, 11)]
+                                money = "2.40"
+                                with open("accounts.csv", "a") as f:
+                                    responses = ":.".join(responses)
+                                    amounts = ":.".join(amounts)
+                                    f.write(f"{username},{password},{money},{responses},{amounts}\n")
+                                with open("log.txt","a") as f:
+                                    f.write(f"Account '{username}' Created!\n")
+                        if response != "Error: Incorrect Password":
+                            text = responses.replace(":.", "\n") + "\n\n" + amounts.replace(":.", "\n")
+                            response = f"""\
 <!DOCTYPE html>
 <html>
     <head>
@@ -223,14 +279,14 @@ def ap_mode(ssid, password):
         <title>Ebony Notepad</title>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Maven+Pro&display=swap">
         <style>
-            body {
+            body {{
                 background-color: #444;
                 color: #fff;
                 font-family: 'Maven Pro', sans-serif;
                 display: flex;
-            }
+            }}
 
-            #notepad {
+            #notepad {{
                 width: 75%;
                 height: 90vh;
                 border: none;
@@ -240,33 +296,36 @@ def ap_mode(ssid, password):
                 color: #fff;
                 padding: 20px;
                 font-size: 20px;
-            }
+            }}
 
-            #taskbar {
+            #taskbar {{
                 flex-grow: 1;
                 display: flex;
+                flex-direction: column;
                 background-color: #555;
                 padding: 20px;
                 margin-left: 10px;
                 align-items: flex-start;
                 flex-wrap: wrap;
-            }
+            }}
 
-            #title {
+            #title {{
                 font-family: 'Maven Pro', sans-serif;
-                flex: 1 1 calc(100% - 10px);
+                flex: 1 1 auto;
+                width: 100%;
                 height: 50px;
                 padding: 10px;
-                font-size: 16px;
+                font-size: 25px;
                 background-color: #555;
                 color: #fff;
                 border: none;
                 outline: none;
-            }
+                margin-bottom: 10px;
+            }}
 
-            #save-btn {
+            #save-btn {{
                 font-family: 'Maven Pro', sans-serif;
-                flex: 1 1 calc(50% - 5px);
+                width: 100%;
                 height: 50px;
                 padding: 10px 20px;
                 font-size: 16px;
@@ -274,18 +333,32 @@ def ap_mode(ssid, password):
                 color: #fff;
                 border: none;
                 cursor: pointer;
-                margin-top: 10px;
-            }
+                margin-bottom: 10px;
+            }}
+
+            #money-display {{
+                flex-grow: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                background-color: #555;
+                color: #fff;
+                text-align: center;
+                font-size: 30px;
+                font-weight: bold;
+            }}
         </style>
     </head>
     <body>
         <textarea id="notepad" placeholder="Start typing...">{text}</textarea>
         <div id="taskbar">
-            <input type="text" id="title" placeholder="Enter a title..." value="{title}">
+            <input type="text" id="title" placeholder="Enter a title..." value="{username}">
             <button id="save-btn">Save</button>
+            <div id="money-display">£{money}</div>
         </div>
         <script>
-            document.getElementById("save-btn").addEventListener("click", function() {
+            document.getElementById("save-btn").addEventListener("click", function() {{
                 var title = document.getElementById("title").value;
                 var content = document.getElementById("notepad").value;
 
@@ -293,63 +366,61 @@ def ap_mode(ssid, password):
                 var xhr = new XMLHttpRequest();
 
                 // Configure the request
-                xhr.open("POST", "/save", true);
+                xhr.open("POST", "/account/save", true);
                 xhr.setRequestHeader("Content-Type", "application/json");
 
                 // Define the data to be sent
-                var data = JSON.stringify({ title: title, content: content });
+                var data = JSON.stringify({{ title: title, content: content }});
 
                 // Handle the response
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                xhr.onreadystatechange = function() {{
+                    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {{
                         // Handle the response from the Flask route
                         var response = JSON.parse(xhr.responseText);
                         console.log(response);
-                    }
-                };
+                    }}
+                }};
 
                 // Send the request with the data
                 xhr.send(data);
-            });
+            }});
         </script>
     </body>
-</html>
-"""
-                  else:
-                      password_,money,responses,amounts=getdata(username)
-                      response = f"{money}\n"+responses.replace(":.","\n")+"\n"+amounts.replace(":.","\n")
-              except Exception as e:
-                  response = "Error: Mistyped Address"
-                  print(e)
-      else:
-          response = str(len(addrlst))+".:"+str(timestamp)+".:"+htmlcontent
-      print(response)
-      if "</html>" not in response:
-          responsefinal = f"""\
+</html>"""
+                    else:
+                        password_, money, responses, amounts = getdata(username)
+                        response = f"{money}\n" + responses.replace(":.", "\n") + "\n" + amounts.replace(":.", "\n")
+                except Exception as e:
+                    response = "Error: Mistyped Address"
+                    print(e)
+        else:
+            response = str(len(addrlst)) + ".:" + str(timestamp) + ".:" + htmlcontent
+        print(response)
+        if "</html>" not in response:
+            responsefinal = f"""\
 HTTP/1.1 200 OK\r
 Content-Type: text/plain\r
 Content-Length: {len(response)}\r
 \r
 {response}"""
-      else:
-          responsefinal = response
-      conn.send(responsefinal.encode('utf-8'))
-      conn.close()
+        else:
+            responsefinal = response
+        conn.send(responsefinal.encode('utf-8'))
+        conn.close()
+
 #MAINLOOP
 if _.var() == False:
     print(f"Borealis Online (acc #01)\nRunning on name '{NAME}'")
-    _thread.start_new_thread(terminate,[0.5])
-    ap_mode(NAME,
-        'pico-pico')
+    _thread.start_new_thread(terminate, [0.5])
+    ap_mode(NAME, 'pico-pico')
 else:
     addcmd = __.run(commands)
     if addcmd != False:
         commands = addcmd
         print(f"Borealis Online (acc #02)\nRunning on name '{NAME}'")
-        _thread.start_new_thread(terminate,[0.5])
-        ap_mode(NAME,
-        'pico-pico')
+        _thread.start_new_thread(terminate, [0.5])
+        ap_mode(NAME, 'pico-pico')
     else:
-        with open("commands.txt","w") as f:
+        with open("commands.txt", "w") as f:
             f.write("\n".join(addcmd))
         print("Borealis Offline")
