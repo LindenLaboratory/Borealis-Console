@@ -389,7 +389,7 @@ def ap_mode(ssid, password):
 </html>"""
                     else:
                         password_, money, responses, amounts = getdata(username)
-                        response = f"{money}\n" + responses.replace(":.", "\n") + "\n" + amounts.replace(":.", "\n")
+                        response = f"{money}\n" + responses.replace(":.", "\n") + "\n\n" + amounts.replace(":.", "\n")
                 except Exception as e:
                     response = "Error: Mistyped Address"
                     print(e)
