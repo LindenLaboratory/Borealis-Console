@@ -15,3 +15,8 @@ The Pico WH costs **£6.80** and the OLED Display Module costs **£10.80**, brin
 
 ## How to set up the devices
 First, follow the instructions in **NETWORK.md** of the Borealis repo to set up the actual network, forgoing installing the **main.py** files onto the _Choir_ and _Conductor_ devices. After you have completed this, install the **main.py** file from [the Conductor folder](Conductor) folder onto the _Conductor_ device, as well as the **accounts.csv** file. Next, attatch the screen to the _Choir_ device and install the **main.py** file from in [the Console folder](Console) as well as the **account.txt**. Finally, read through **ACCOUNTS.md** and follow the instructions to create the account and link it to the device. You are now finished!
+
+---
+
+## Credits
+Thank you to **samveen** for this amazing driver for the display - visit [here](https://github.com/samveen/pico-oled-1.3-driver)
