@@ -10,8 +10,17 @@ led = Pin(2, Pin.OUT)
 b0,b1,b2 = True,False,False
 bindex,bnum = -1,0
 modules = ["ping","receive","send"]
+module = ""
 
 #FUNCTIONS
+def getaccount():
+    with open("account.txt","r") as f:
+        username = f.readline().replace("\n","")
+    if username == "":
+        return None
+    else:
+        return username
+
 def connect():
   wlan = network.WLAN(network.STA_IF)
   wlan.active(True)
@@ -27,7 +36,7 @@ def send(jsondata=None):
     if jsondata is None:
         with open('data.json', encoding='utf-8') as f:
             data = json.load(f)
-            data["log"] = ">:" + data["log"] + ":<"
+            data["log"] = data["log"]
         jsondata = data
     response = requests.post('http://192.168.4.1/', json=jsondata)
 
@@ -42,12 +51,26 @@ sendlst = []
 
 def pingGET():
     try:
-        get("/")
-        return ["Connected"]
+        username = getaccount()
+        if username == None:
+            accountlnk = get("/log").split("\n")[-1]
+            if "Account '" in accountlnk and "' Created" in accountlnk:
+                username = accountlnk.split("'")[1]
+                with open("account.txt","w") as f:
+                    f.write(username)
+            else:
+                return ["Connected","No Account Found"]
+        money = get(f"/account?v=0&u={username}").split("\n\n")[0]
+        return [f"Connected\n{username}",money]
+        
     except:
+        username = getaccount()
+        if username:
+            return [f"Disconnected\n{username}"]
         return ["Disconnected"]
 def ping(item):
-    pass
+    global bnum
+    bnum = 0
     
 def receiveGET():
     pingget = "\n".split(get("/log"))
@@ -56,7 +79,7 @@ def receive(item):
     send({"log":item})
     
 def sendGET():
-    sendget = [i for i in range(10)] # replace with code to get from accountdb
+    sendget = get(f"/account?v=0&u={getaccount()}").split("\n\n")[1]
     return sendget
 def send(item):
     send({"log":item})
@@ -74,7 +97,7 @@ while True:
         else:
             bindex = 0
     elif b1:
-        if bnum < 9:
+        if bnum < len(globals()[module + "lst"])-1:
             bnum += 1
         else:
             bnum = 0
