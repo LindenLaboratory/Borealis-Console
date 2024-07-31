@@ -4,15 +4,34 @@ import urequests as requests
 import json
 from machine import Pin
 import time
+import _thread
+import PicoOled13
 
 #SETUP
 led = Pin(2, Pin.OUT)
 b0,b1,b2 = True,False,False
+looped = False
 bindex,bnum = -1,0
 modules = ["ping","receive","send"]
 module = ""
+picodisplay=PicoOled13.get()
+loc=picodisplay.text("Borealis Console",0,0,0xffff)
+loc=picodisplay.text("v1.1.1",0,loc[1],0xffff)
+time.sleep(2.5)
 
 #FUNCTIONS
+def buttons(delay):
+    global b0,b1,looped
+    while True:
+        if looped:
+            b0 = picodisplay.is_pressed(picodisplay.KEY0)
+            b1 = picodisplay.is_pressed(picodisplay.KEY1)
+            print(b0,b1)
+            time.sleep(delay)
+        else:
+            print("Error: Device has not started")
+            time.sleep(delay*2)
+
 def getaccount():
     with open("account.txt","r") as f:
         username = f.readline().replace("\n","")
@@ -27,12 +46,10 @@ def connect():
   wlan.connect('Borealis', 'pico-pico')
 
 def get(endpoint):
-    connect()
     response = requests.get(f'http://192.168.4.1{endpoint}')
     return response.text
 
 def send(jsondata=None):
-    connect()
     if jsondata is None:
         with open('data.json', encoding='utf-8') as f:
             data = json.load(f)
@@ -42,7 +59,8 @@ def send(jsondata=None):
 
 def display(string):
     print(string)
-    #display code here
+    picodisplay.clear()
+    loc=picodisplay.text(string,0,0,0xffff)
 
 #MODULES
 pinglst = []
@@ -51,6 +69,7 @@ sendlst = []
 
 def pingGET():
     try:
+        connect()
         username = getaccount()
         if username == None:
             accountlnk = get("/log").split("\n")[-1]
@@ -60,9 +79,8 @@ def pingGET():
                     f.write(username)
             else:
                 return ["Connected","No Account Found"]
-        money = get(f"/account?v=0&u={username}").split("\n\n")[0]
-        return [f"Connected\n{username}",money]
-        
+            money = get(f"/account?v=0&u={username}").split("\n\n")[0]
+            return [f"Connected\n{username}",money]
     except:
         username = getaccount()
         if username:
@@ -70,7 +88,8 @@ def pingGET():
         return ["Disconnected"]
 def ping(item):
     global bnum
-    bnum = 0
+    bnum = -1
+    b1 = True
     
 def receiveGET():
     pingget = "\n".split(get("/log"))
@@ -86,6 +105,7 @@ def send(item):
 
 #MAINLOOP
 print("FEEDBACK Mode Activated")
+_thread.start_new_thread(buttons,[0.5])
 # Start loop here
 while True:
     if b0 and b1:
@@ -103,6 +123,7 @@ while True:
             bnum = 0
         b1 = False
     else:
+        looped = True
         continue
     module = modules[bindex]
     try:
@@ -110,7 +131,8 @@ while True:
             item = eval(f"{module}GET()")[bnum]
             b0 = False
         else:
-            item = globals()[module + "lst"][bnum]
+            if looped:
+                item = globals()[module + "lst"][bnum]
         #OUTPUT
         display(item)
         if b2:
@@ -118,5 +140,6 @@ while True:
             b2 = False
     except Exception as e:
         bindex = 0
-        print("Error path A: "+str(e))
+        print(b0,b1,looped)
+        print("Error: "+str(e))
 # End loop here
