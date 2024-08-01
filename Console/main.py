@@ -135,6 +135,7 @@ def send(jsondata=None):
             data["log"] = data["log"]
         jsondata = data
     response = requests.post('http://192.168.4.1/', json=jsondata,headers=request_header)
+    return response.text
 def execute(item):
     pass
 
@@ -200,7 +201,11 @@ while True:
             print("Syncing Account")
             display_line2(display,"Syncing Account")
             display.show()
-            send({"account":getaccount()})
+            response = send({"account":getaccount()})
+            if response == "":
+               print("Failed")
+                error = "404"
+                display_disconnected(display,line)
         print(f"Account Synced (username: {username})")
         display_line2(display, "Account Synced")
         display.show()
