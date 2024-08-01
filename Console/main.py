@@ -145,7 +145,7 @@ display = OLED_1inch3()
     #MAINLOOP
 def mainloop():
     while True:
-        display_text(display,"Borealis Apps:.\nNavigate with buttons & doubleclick to run app")
+        display_splash(display,"App Store","v0.0.1")
         apps,code = get("/app/list").split(";,").split(":.")
         while True:
             if b0.value() == 0 and  b1.value() == 0:
