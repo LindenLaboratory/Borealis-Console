@@ -1,37 +1,90 @@
 #IMPORTS
+import io
+from machine import Pin, PWM
+import utime
+from PicoOLED1point3spi import OLED_1inch3
+import micropython
 import network
 import urequests as requests
 import json
-from machine import Pin
-import time
-import _thread
-import PicoOled13
 
 #SETUP
-led = Pin(2, Pin.OUT)
-b0,b1,b2 = True,False,False
-looped = False
-bindex,bnum = -1,0
-modules = ["ping","receive","send"]
-module = ""
-picodisplay=PicoOled13.get()
-loc=picodisplay.text("Borealis Console",0,0,0xffff)
-loc=picodisplay.text("v1.1.1",0,loc[1],0xffff)
-time.sleep(2.5)
+b0 = Pin(15, Pin.IN, Pin.PULL_UP)
+b1 = Pin(17, Pin.IN, Pin.PULL_UP)
+error = "404"
+username = ""
+money = 0.00
+line = 1
 
 #FUNCTIONS
-def buttons(delay):
-    global b0,b1,looped
-    while True:
-        if looped:
-            b0 = picodisplay.is_pressed(picodisplay.KEY0)
-            b1 = picodisplay.is_pressed(picodisplay.KEY1)
-            print(b0,b1)
-            time.sleep(delay)
-        else:
-            print("Error: Device has not started")
-            time.sleep(delay*2)
+    #ABSTRACTION FUNCTIONS
+def truncation(txt):
+    if len(txt) > 16:
+        txt = txt[:13] + "..."
+    return txt
+    #DISPLAY FUNCTIONS
+def display_clear_all(display):
+    display.fill(0x0000)
+def display_clear_line1(display):
+    display.fill_rect(0, 0, 128, 16, display.black)
+def display_clear_line2(display):
+    display.fill_rect(0, 16, 128, 16, display.black)
+def display_clear_line3(display):
+    display.fill_rect(0, 32, 128, 16, display.black)
+def display_clear_line4(display):
+    display.fill_rect(0, 48, 128, 16, display.black)
+def display_line1(display, txt):
+    txt = truncation(txt)
+    display_clear_line1(display)
+    display.text(txt, 0, 4, display.white)
+def display_line2(display, txt):
+    txt = truncation(txt)
+    display_clear_line2(display)
+    display.text(txt, 0, 20, display.white)
+def display_line3(display, txt):
+    txt = truncation(txt)
+    display_clear_line3(display)
+    display.text(txt, 0, 36, display.white)
+def display_line4(display, txt):
+    txt = truncation(txt)
+    display_clear_line4(display)
+    display.text(txt, 0, 52, display.white)
+def display_splash(display):
+    display_clear_all(display)
+    display.rect(0, 0, 128, 64, display.white)
+    display.text("    Borealis    ", 0, 22, display.white)
+    display.text("     v1.1.2     ", 0, 40, display.white)
+    utime.sleep(0.1)
+    display.show()
+    utime.sleep(5)
+    display_clear_all(display)
+    display.show()
+    utime.sleep(0.1)
+def display_disconnected(display,line):
+    global error
+    eval(f'display_line{str(line)}(display, "Failed")')
+    display.show()
+    utime.sleep(1)
+    display_clear_all(display)
+    display.rect(0, 0, 128, 64, display.white)
+    display.text("  Disconnected  ", 0, 22, display.white)
+    display.text(f"      e{error}      ", 0, 40, display.white)
+    utime.sleep(0.1)
+    display.show()
+    while b0.value() == 1 and b1.value() == 1:
+        pass
+        utime.sleep(0.5)
 
+    #NETWORK FUNCTIONS
+def connect():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect('Borealis', 'pico-pico')
+    for _ in range(5):
+        utime.sleep(1)
+        if wlan.isconnected():
+            return True
+    return False
 def getaccount():
     with open("account.txt","r") as f:
         username = f.readline().replace("\n","")
@@ -39,16 +92,9 @@ def getaccount():
         return None
     else:
         return username
-
-def connect():
-  wlan = network.WLAN(network.STA_IF)
-  wlan.active(True)
-  wlan.connect('Borealis', 'pico-pico')
-
 def get(endpoint):
     response = requests.get(f'http://192.168.4.1{endpoint}')
     return response.text
-
 def send(jsondata=None):
     if jsondata is None:
         with open('data.json', encoding='utf-8') as f:
@@ -57,89 +103,49 @@ def send(jsondata=None):
         jsondata = data
     response = requests.post('http://192.168.4.1/', json=jsondata)
 
-def display(string):
-    print(string)
-    picodisplay.clear()
-    loc=picodisplay.text(string,0,0,0xffff)
-
-#MODULES
-pinglst = []
-receivelst = []
-sendlst = []
-
-def pingGET():
-    try:
-        connect()
-        username = getaccount()
-        if username == None:
-            accountlnk = get("/log").split("\n")[-1]
-            if "Account '" in accountlnk and "' Created" in accountlnk:
-                username = accountlnk.split("'")[1]
-                with open("account.txt","w") as f:
-                    f.write(username)
-            else:
-                return ["Connected","No Account Found"]
-            money = get(f"/account?v=0&u={username}").split("\n\n")[0]
-            return [f"Connected\n{username}",money]
-    except:
-        username = getaccount()
-        if username:
-            return [f"Disconnected\n{username}"]
-        return ["Disconnected"]
-def ping(item):
-    global bnum
-    bnum = -1
-    b1 = True
-    
-def receiveGET():
-    pingget = "\n".split(get("/log"))
-    return pingget[-10:]
-def receive(item):
-    send({"log":item})
-    
-def sendGET():
-    sendget = get(f"/account?v=0&u={getaccount()}").split("\n\n")[1]
-    return sendget
-def send(item):
-    send({"log":item})
-
 #MAINLOOP
 print("FEEDBACK Mode Activated")
-_thread.start_new_thread(buttons,[0.5])
-# Start loop here
+display = OLED_1inch3()
 while True:
-    if b0 and b1:
-        b2 = True
-        b0,b1 = False,False 
-    elif b0:
-        if bindex < len(modules) - 1:
-            bindex += 1
-        else:
-            bindex = 0
-    elif b1:
-        if bnum < len(globals()[module + "lst"])-1:
-            bnum += 1
-        else:
-            bnum = 0
-        b1 = False
-    else:
-        looped = True
-        continue
-    module = modules[bindex]
+    display_clear_all(display)
     try:
-        if b0 and not b2:
-            item = eval(f"{module}GET()")[bnum]
-            b0 = False
+        line = 1
+        display_line1(display, "Connecting...")
+        display.show()
+        print("Connecting...")
+        if connect() == False:
+            print("Disconnected")
+            display_disconnected(display,line)
+            continue
+        print("Connected")
+        display_line1(display, "Connected")
+        display.show()
+        line = 2
+        username = getaccount()
+        if username == None:
+            print("Getting Account")
+            display_line2(display, "Getting Account")
+            display.show()
+            logged = get("/log")[-10:]
+            for i in logged:
+                if "Account '" in i and "' Created" in i:
+                    username = i.split("'")[1]
+            if username == None:
+                print("Failed")
+                display_disconnected(display,line)
+                continue
+            else:
+                with open("account.txt","w") as f:
+                    f.write(username)
         else:
-            if looped:
-                item = globals()[module + "lst"][bnum]
-        #OUTPUT
-        display(item)
-        if b2:
-            eval("{module}(item)")
-            b2 = False
-    except Exception as e:
-        bindex = 0
-        print(b0,b1,looped)
-        print("Error: "+str(e))
-# End loop here
+            print("Syncing Account")
+            display_line2(display,"Syncing Account")
+            display.show()
+            send({"account":getaccount()})
+        print(f"Account Synced (username: {username})")
+        display_line2("Account Synced")
+        display.show()
+        break
+    except:
+        display_disconnected(display,line)
+        continue
