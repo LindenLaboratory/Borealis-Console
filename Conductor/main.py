@@ -391,7 +391,7 @@ def ap_mode(ssid, password):
                         password_, money, responses, amounts = getdata(username)
                         response = f"{money}\n" + responses.replace(":.", "\n") + "\n" + amounts.replace(":.", "\n")
                 except Exception as e:
-                    response = "Error: Mistyped Address"
+                    response = "Error 400: Mistyped Address"
                     print(e)
         else:
             response = str(len(addrlst)) + ".:" + str(timestamp) + ".:" + htmlcontent
