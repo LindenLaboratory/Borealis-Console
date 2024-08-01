@@ -202,7 +202,7 @@ while True:
             display_line2(display,"Syncing Account")
             display.show()
             response = send({"account":getaccount()})
-            if response == "":
+            if response == "Account Connection Failed":
                print("Failed")
                 error = "404"
                 display_disconnected(display,line)
