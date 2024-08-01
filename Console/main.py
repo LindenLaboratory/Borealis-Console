@@ -147,16 +147,18 @@ def mainloop():
     display_splash(display,"Borealis","v1.2.1")
     display_splash(display,username,money)
     display_text(display,"Borealis Apps:.\nNavigate with buttons & doubleclick to run app")
-    apps,code = get("/app/list").split("\n").split(",")
+    apps,code = get("/app/list").split(";,").split(":.")
     while True:
-        if b0.value() == 0 and b1.value() == 0:
-            execute(apps[bindex])
-        elif b1.value() == 0:
-            bindex += 1
+        if b1.value() == 0:
+            if bindex < len(apps):
+                bindex += 1
+            else:
+                bindex = 0
             display_text(display,apps[bindex])
         elif b0.value() == 0:
-            bindex -= 1
-            display_text(display,apps[bindex])
+            if bindex >= 0:
+                execute(apps[bindex])
+                break
         else:
             utime.sleep(0.5)
     #CONNECTION
@@ -212,7 +214,8 @@ while True:
         display.show()
         utime.sleep(1)
         error = "500"
-        mainloop()
+        while True:
+            mainloop()
     except Exception as e:
         print(e)
         display_disconnected(display,line)
