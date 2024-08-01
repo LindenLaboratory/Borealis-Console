@@ -211,7 +211,7 @@ while True:
         display_line4(display, "Booting...")
         display.show()
         utime.sleep(1)
-        error = "512"
+        error = "500"
         mainloop()
     except Exception as e:
         print(e)
