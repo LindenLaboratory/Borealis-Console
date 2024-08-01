@@ -15,7 +15,7 @@ error = "404"
 username = ""
 money = 0.00
 line = 1
-bindex = 0
+bindex = -1
 
 #FUNCTIONS
     #ABSTRACTION FUNCTIONS
