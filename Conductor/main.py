@@ -65,11 +65,31 @@ def execute(string):
             return "Account Connected"
         else:
             return "Account Connection Failed"
-            
+    
+    def edit(dictionary):
+        try:
+            if "edit" in dictionary:
+                username,password,update = dictionary['edit'].split(",")
+                with open("accounts.csv", "r") as f:
+                    lines_ = []
+                    lines = f.readlines()
+                    for line in lines:
+                        lst = line.split(",")
+                        if username == lst[0] and password == lst[1]:
+                            lines_.append(update)
+                        else:
+                            lines_.append(line)
+                    with open("accounts.csv","w") as f:
+                        f.write("\n".join(lines_)
+                return "User Info Edited"
+        else:
+            return "User Info Edit Failed"
+
     #ANALYSIS
     account(dictionary)
     log(dictionary)
     command(dictionary)
+    edit(dictionary)
 
 def encrypt(string):
     pause = False
