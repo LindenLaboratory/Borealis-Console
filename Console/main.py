@@ -187,6 +187,7 @@ while True:
                     username = i.split("'")[1]
             if username == None:
                 print("Failed")
+                error = "404"
                 display_disconnected(display,line)
                 continue
             else:
@@ -210,6 +211,7 @@ while True:
         display_line4(display, "Booting...")
         display.show()
         utime.sleep(1)
+        error = "512"
         mainloop()
     except Exception as e:
         print(e)
