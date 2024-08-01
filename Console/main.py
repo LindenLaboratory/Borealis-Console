@@ -147,7 +147,7 @@ display = OLED_1inch3()
 def mainloop():
     while True:
         display_splash(display,"App Store","v0.0.1")
-        apps,code = get("/app/list").split(";,").split(":.")
+        apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
         while True:
             if b0.value() == 0 and  b1.value() == 0:
                 break
@@ -159,7 +159,8 @@ def mainloop():
                 display_text(display,apps[bindex])
             elif b0.value() == 0:
                 if bindex >= 0:
-                    execute(code[bindex])
+                    name = apps[bindex].split("'")[1]
+                    execute(get(f"/app/{name}"))
                     break
             else:
                 utime.sleep(0.5)
