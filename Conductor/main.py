@@ -30,7 +30,7 @@ def getdata(username):
         for i in lines:
             parts = i.replace("\n", "").split(",")
             if parts[0] == username:
-                return parts[1], parts[2], parts[3], parts[4]
+                return parts
 
 def execute(string):
     dictionary = eval(string)
@@ -229,15 +229,15 @@ def ap_mode(ssid, password):
                 dictionary = eval(string)
                 username = dictionary["title"]
                 text_ = dictionary["content"]
-                responses_,amounts_ = text_.split("\\n\\n")
-                responses,amounts=responses_.replace("\\n",":."),amounts_.replace("\\n",":.")
-                print(username, responses, amounts)
+                lst = text_.split("\\n\\n")
+                lst = [_.replace("\\n",":.") for _ in lst]
                 lines_=[]
                 with open("accounts.csv", "r") as f:
                     lines = f.readlines()
                     for line in lines:
                         if password == line.split(",")[1]:
-                            lines_.append(f"{username},{password},{money},{responses},{amounts}\n")
+                            other = ",".join(lst)
+                            lines_.append(f"{username},{password},{money},{other}\n")
                         else:
                             lines_.append(line)
                     f.close()
@@ -256,12 +256,13 @@ def ap_mode(ssid, password):
                         with open("accounts.csv", "r") as f:
                             txt = "".join(f.readlines())
                             if username in txt:
-                                password_, money, responses, amounts = getdata(username)
-                                if password_ != password:
+                                items = getdata(username)
+                                if items[0] != password:
                                     response = "Error: Incorrect Password"
                             else:
                                 responses = ["Message " + str(i) for i in range(1, 11)]
                                 amounts = [str(i) + ".00" for i in range(1, 11)]
+                                items = [responses, amounts]
                                 money = "2.40"
                                 with open("accounts.csv", "a") as f:
                                     responses = ":.".join(responses)
@@ -270,7 +271,7 @@ def ap_mode(ssid, password):
                                 with open("log.txt","a") as f:
                                     f.write(f"Account '{username}' Created!\n")
                         if response != "Error: Incorrect Password":
-                            text = responses.replace(":.", "\n") + "\n\n" + amounts.replace(":.", "\n")
+                            text = "\n\n".join(items)
                             response = f"""\
 <!DOCTYPE html>
 <html>
