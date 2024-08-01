@@ -204,7 +204,7 @@ while True:
             response = send({"account":getaccount()})
             if response == "Account Connection Failed":
                print("Failed")
-                error = "404"
+                error = "400"
                 display_disconnected(display,line)
         print(f"Account Synced (username: {username})")
         display_line2(display, "Account Synced")
