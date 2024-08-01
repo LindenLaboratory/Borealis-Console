@@ -144,23 +144,24 @@ print("FEEDBACK Mode Activated")
 display = OLED_1inch3()
     #MAINLOOP
 def mainloop():
-    display_splash(display,"Borealis","v1.2.1")
-    display_splash(display,username,money)
-    display_text(display,"Borealis Apps:.\nNavigate with buttons & doubleclick to run app")
-    apps,code = get("/app/list").split(";,").split(":.")
     while True:
-        if b1.value() == 0:
-            if bindex < len(apps):
-                bindex += 1
-            else:
-                bindex = 0
-            display_text(display,apps[bindex])
-        elif b0.value() == 0:
-            if bindex >= 0:
-                execute(apps[bindex])
+        display_text(display,"Borealis Apps:.\nNavigate with buttons & doubleclick to run app")
+        apps,code = get("/app/list").split(";,").split(":.")
+        while True:
+            if b0.value() == 0 and  b1.value() == 0:
                 break
-        else:
-            utime.sleep(0.5)
+            elif b1.value() == 0:
+                if bindex < len(apps):
+                    bindex += 1
+                else:
+                    bindex = 0
+                display_text(display,apps[bindex])
+            elif b0.value() == 0:
+                if bindex >= 0:
+                    execute(code[bindex])
+                    break
+            else:
+                utime.sleep(0.5)
     #CONNECTION
 while True:
     display_clear_all(display)
@@ -214,8 +215,10 @@ while True:
         display.show()
         utime.sleep(1)
         error = "500"
-        while True:
-            mainloop()
+        display_splash(display,"Borealis","v1.2.1")
+        display_splash(display,username,money)
+        mainloop()
+        continue
     except Exception as e:
         print(e)
         display_disconnected(display,line)
