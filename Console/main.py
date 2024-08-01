@@ -139,8 +139,27 @@ def execute(item):
     pass
 
 #MAINLOOP
+    #SETUP
 print("FEEDBACK Mode Activated")
 display = OLED_1inch3()
+    #MAINLOOP
+def mainloop():
+    display_splash(display,"Borealis","v1.2.1")
+    display_splash(display,username,money)
+    display_text(display,"Borealis Apps:.\nNavigate with buttons & doubleclick to run app")
+    apps,code = get("/app/list").split("\n").split(",")
+    while True:
+        if b0.value() == 0 and b1.value() == 0:
+            execute(apps[bindex])
+        elif b1.value() == 0:
+            bindex += 1
+            display_text(display,apps[bindex])
+        elif b0.value() == 0:
+            bindex -= 1
+            display_text(display,apps[bindex])
+        else:
+            utime.sleep(0.5)
+    #CONNECTION
 while True:
     display_clear_all(display)
     try:
@@ -191,21 +210,8 @@ while True:
         display_line4(display, "Booting...")
         display.show()
         utime.sleep(1)
-        break
+        mainloop()
     except Exception as e:
         print(e)
         display_disconnected(display,line)
         continue
-
-display_splash(display,"Borealis","v1.2.1")
-display_splash(display,username,money)
-display_text(display,"Borealis Apps:.\nNavigate with KEY1 and press KEY0 to run app")
-apps = get("/app/list").split("\n")
-while True:
-    if b1.value() == 0:
-        bindex += 1
-        display_text(display,apps[bindex])
-    elif b0.value() == 0:
-        execute(apps[bindex])
-    else:
-        utime.sleep(0.5)
