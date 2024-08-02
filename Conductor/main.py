@@ -80,11 +80,12 @@ def execute(string):
                         else:
                             lines_.append(line)
                     with open("accounts.csv","w") as f:
-                        f.write("\n".join(lines_)
+                        f.write("\n".join(lines_))
                 return "User Info Edited"
-        else:
+            else:
+                return "User Info Edit Failed"
+        except:
             return "User Info Edit Failed"
-
     #ANALYSIS
     account(dictionary)
     log(dictionary)
@@ -267,6 +268,7 @@ def ap_mode(ssid, password):
                 response = "Data saved successfully"
             else:
                 try:
+                    response = "Success"
                     variables = sitedir.split("?")[1].split("&")
                     variables = [var.split("=")[1] for var in variables]
                     version = variables[0]
@@ -277,10 +279,11 @@ def ap_mode(ssid, password):
                             txt = "".join(f.readlines())
                             if username in txt:
                                 items = getdata(username)
+                                money = items[2]
                                 if items[1] != password:
                                     response = "Error: Incorrect Password"
                                 else:
-                                    items = items[2:]
+                                    items = [item.split(":.") for item in items[3:]]
                             else:
                                 responses = ["Message " + str(i) for i in range(1, 11)]
                                 amounts = [str(i) + ".00" for i in range(1, 11)]
@@ -293,7 +296,12 @@ def ap_mode(ssid, password):
                                 with open("log.txt","a") as f:
                                     f.write(f"Account '{username}' Created!\n")
                         if response != "Error: Incorrect Password":
-                            text = "\n\n".join(items)
+                            text = ""
+                            for lst in items:
+                                for item in lst:
+                                    text = text + item + "\n"
+                                text += "\n"
+                            text = text.rstrip()
                             response = f"""\
 <!DOCTYPE html>
 <html>
@@ -411,7 +419,7 @@ def ap_mode(ssid, password):
     </body>
 </html>"""
                     else:
-                        datalst = getdata(username)
+                        datalst = getdata(username)[2:]
                         response = "\n\n".join([item.replace(":.","\n") for item in datalst])
                 except Exception as e:
                     response = "Error 400: Mistyped Address"
