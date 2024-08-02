@@ -137,22 +137,26 @@ def send(jsondata=None):
     response = requests.post('http://192.168.4.1/', json=jsondata,headers=request_header)
     return response.text
 def execute(code):
-    lines = code.split("\n")
-    array = lines[0]
-    for lst in array.split("."):
-        lst,num = lst.split(","),0
-        while True:
-            item = lst[num]
-            num = num + 1
-            display_text(item)
-            while b1.value() == 0:
-                if b0.value() == 0:
-                    exec(f"A='{item}'"+"\n"+lines[1].replace(";","\n"))
-                    break
-                else:
-                    utime.sleep(0.5)
-            if b0.value() == 0:
-                break
+    codeplus = """
+def GET(endpoint):
+    return get(endpoint())
+def SEND(jsondata):
+    return send(jsondata)
+def DISPLAY(text)
+    display_text(display,text)
+def B0():
+    return b0.value()
+def B1():
+    return b1.value()
+def B2():
+    if b1.value() == 0 and b0.value() == 0:
+        return 0
+    else:
+        return 1
+def ACCOUNT():
+    return getaccount()
+"""+"\n"+code
+    exec(codeplus)
 
 #MAINLOOP
     #SETUP
