@@ -179,7 +179,7 @@ def mainloop():
             elif b0.value() == 0:
                 if bindex >= 0:
                     name = apps[bindex].split("'")[1]
-                    execute(get(f"/app/{name}"))
+                    execute(get(f"/app/{name}.py"))
                     break
             else:
                 utime.sleep(0.5)
