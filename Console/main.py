@@ -234,6 +234,10 @@ while True:
         display_line3(display, "Fetching Stats")
         display.show()
         money = get(f"/account?v=0&u={username}").split("\n\n")[0]
+        if "Error 400" in response:
+            print("Failed")
+            error = "400"
+            display_disconnected(display,line)
         display_line3(display, "Stats Fetched")
         display.show()
         display_line4(display, "Booting...")
