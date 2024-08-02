@@ -279,6 +279,8 @@ def ap_mode(ssid, password):
                                 items = getdata(username)
                                 if items[0] != password:
                                     response = "Error: Incorrect Password"
+                                else:
+                                    items = items[2:]
                             else:
                                 responses = ["Message " + str(i) for i in range(1, 11)]
                                 amounts = [str(i) + ".00" for i in range(1, 11)]
@@ -409,8 +411,8 @@ def ap_mode(ssid, password):
     </body>
 </html>"""
                     else:
-                        password_, money, responses, amounts = getdata(username)
-                        response = f"{money}\n" + responses.replace(":.", "\n") + "\n" + amounts.replace(":.", "\n")
+                        datalst = getdata(username)
+                        response = "\n\n".join([item.replace(":.","\n") for item in datalst])
                 except Exception as e:
                     response = "Error 400: Mistyped Address"
                     print(e)
