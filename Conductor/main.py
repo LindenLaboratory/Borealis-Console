@@ -277,7 +277,7 @@ def ap_mode(ssid, password):
                             txt = "".join(f.readlines())
                             if username in txt:
                                 items = getdata(username)
-                                if items[0] != password:
+                                if items[1] != password:
                                     response = "Error: Incorrect Password"
                                 else:
                                     items = items[2:]
