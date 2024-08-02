@@ -136,8 +136,23 @@ def send(jsondata=None):
         jsondata = data
     response = requests.post('http://192.168.4.1/', json=jsondata,headers=request_header)
     return response.text
-def execute(item):
-    pass
+def execute(code):
+    lines = code.split("\n")
+    array = lines[0]
+    for lst in array.split("."):
+        lst,num = lst.split(","),0
+        while True:
+            item = lst[num]
+            num = num + 1
+            display_text(item)
+            while b1.value() == 0:
+                if b0.value() == 0:
+                    exec(f"A='{item}'"+"\n"+lines[1].replace(";","\n"))
+                    break
+                else:
+                    utime.sleep(0.5)
+            if b0.value() == 0:
+                break
 
 #MAINLOOP
     #SETUP
@@ -203,8 +218,8 @@ while True:
             display_line2(display,"Syncing Account")
             display.show()
             response = send({"account":getaccount()})
-            if response == "Account Connection Failed":
-               print("Failed")
+            if "Error 400" in response:
+                print("Failed")
                 error = "400"
                 display_disconnected(display,line)
         print(f"Account Synced (username: {username})")
