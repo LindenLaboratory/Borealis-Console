@@ -175,11 +175,12 @@ print("FEEDBACK Mode Activated")
 display = OLED_1inch3()
     #MAINLOOP
 def mainloop():
+    global b0,b1,bindex
     while True:
         display_splash_perm(display,"App Store","v0.0.1")
         apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
         while True:
-            if b0.value() == 0 and  b1.value() == 0:
+            if b0.value() == 0 and b1.value() == 0:
                 break
             elif b1.value() == 0:
                 if bindex < len(apps):
