@@ -82,11 +82,22 @@ def display_splash(display,a,b):
     display_clear_all(display)
     display.show()
     utime.sleep(0.1)
+def display_splash_perm(display,a,b):
+    display_clear_all(display)
+    display.rect(0, 0, 128, 64, display.white)
+    spacea = round(((16-len(a))/2))*" "
+    spaceb = round(((16-len(b))/2))*" "
+    a = spacea + a + spacea
+    b = spaceb + b + spaceb
+    display.text(a, 0, 22, display.white)
+    display.text(b, 0, 40, display.white)
+    display.show()
 def display_disconnected(display,line):
     global error
-    eval(f'display_line{str(line)}(display, "Failed")')
-    display.show()
-    utime.sleep(1)
+    if line != None:
+        eval(f'display_line{str(line)}(display, "Failed")')
+        display.show()
+        utime.sleep(1)
     display_clear_all(display)
     display.rect(0, 0, 128, 64, display.white)
     display.text("  Disconnected  ", 0, 22, display.white)
@@ -165,7 +176,7 @@ display = OLED_1inch3()
     #MAINLOOP
 def mainloop():
     while True:
-        display_splash(display,"App Store","v0.0.1")
+        display_splash_perm(display,"App Store","v0.0.1")
         apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
         while True:
             if b0.value() == 0 and  b1.value() == 0:
@@ -178,7 +189,7 @@ def mainloop():
                 display_text(display,apps[bindex])
             elif b0.value() == 0:
                 if bindex >= 0:
-                    name = apps[bindex].split("'")[1]
+                    name = apps[bindex].split("\n")[0].split("Name: ")[1].strip().lower()
                     execute(get(f"/app/{name}.py"))
                     break
             else:
@@ -243,6 +254,7 @@ while True:
         display_line4(display, "Booting...")
         display.show()
         utime.sleep(1)
+        line = None
         error = "500"
         display_splash(display,"Borealis","v1.2.1")
         display_splash(display,username,money)
