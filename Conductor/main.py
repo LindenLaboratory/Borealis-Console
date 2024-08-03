@@ -7,6 +7,7 @@ import connect as __
 import _thread
 from machine import Pin
 import json
+import os
 
 #SETUP
 addrlst = []
@@ -22,6 +23,7 @@ with open('commands.txt', "r") as f:
     commands = f.readlines()
 
 FEEDBACK = True
+UPLOAD_DIR = "/app"
 
 #FUNCTIONS
 def getdata(username):
@@ -175,6 +177,77 @@ def ap_mode(ssid, password):
         if sitedir == "/log":
             with open("log.txt", "r") as f:
                 response = "".join(f.readlines())
+        elif "/app" in sitedir:
+            if sitedir == "/app":
+                response = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Files</title>
+    <style>
+        body { background-color: #121212; color: #ffffff; font-family: 'Nunito', sans-serif; }
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group input[type="file"] { display: block; }
+        .form-group button { padding: 10px 20px; background-color: #262626; color: #ffffff; border: none; cursor: pointer; }
+        .form-group button:hover { background-color: #3700b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload Files</h1>
+        <form action="/app/upload" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="pyfile">Python Script:</label>
+                <input type="file" id="pyfile" name="pyfile">
+            </div>
+            <div class="form-group">
+                <button type="submit">Upload</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+"""
+            elif sitedir == "/app/upload":
+                request = request.decode()
+                boundary = request.split("boundary=")[1].split("\r\n")[0]
+                content_length = int(request.split("Content-Length: ")[1].split("\r\n")[0])
+                body = conn.recv(content_length).decode()
+                parts = body.split(boundary)
+                for part in parts:
+                    try:
+                        if "Content-Disposition: form-data; name=\"pyfile\"; filename=" in part:
+                            py_filename = part.split("filename=")[1].split("\r\n")[0].strip("\"")
+                            py_content = part.split("\r\n\r\n")[1].rsplit("\r\n", 1)[0]
+                            splitlst = py_content.split("""'''""")
+                            description,content = splitlst[1],splitlst[2]
+                            py_path,txt_path = f"{UPLOAD_DIR}/{py_filename}",f"{UPLOAD_DIR}/list.txt"
+                            try:
+                                with open(py_path, 'w') as f:
+                                    f.write(content)
+                                with open(txt_path,"a") as f:
+                                    f.write(description.replace("\n",":.")+"\n")
+                                print("Python file saved successfully",py_path)
+                                response = "Files uploaded successfully"
+                            except OSError as e:
+                                print(f"Error saving Python file: {e}")
+                                response = "Error 500: File save error"
+                    except Exception as e:
+                        print(e)
+                        response = "Error 400: File formatted incorrectly"
+            elif sitedir == "/app/list":
+                with open(f"{UPLOAD_DIR}/list.txt","r") as f:
+                    response = "".join(f.readlines())
+            else:
+                filename = sitedir.split("/")[-1]
+                try:
+                    with open(f"{UPLOAD_DIR}/{filename}","r") as f:
+                        response = "".join(f.readlines())
+                except Exception as e:
+                    print(e)
+                    response = "Error 404: App not found"
         elif "/account" in sitedir:
             if sitedir == "/account":
                 response = """\
