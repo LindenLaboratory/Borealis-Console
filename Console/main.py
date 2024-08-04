@@ -78,7 +78,7 @@ def display_splash(display,a,b):
     display.text(b, 0, 40, display.white)
     utime.sleep(0.1)
     display.show()
-    utime.sleep(5)
+    utime.sleep(2.5)
     display_clear_all(display)
     display.show()
     utime.sleep(0.1)
@@ -179,6 +179,7 @@ def mainloop():
     while True:
         display_splash_perm(display,"App Store","v0.0.1")
         apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
+        error = "500"
         while True:
             if b0.value() == 0 and b1.value() == 0:
                 break
@@ -246,7 +247,7 @@ while True:
         display_line3(display, "Fetching Stats")
         display.show()
         money = get(f"/account?v=0&u={username}").split("\n\n")[0]
-        if "Error 400" in response:
+        if "Error 400" in money:
             print("Failed")
             error = "400"
             display_disconnected(display,line)
@@ -256,7 +257,6 @@ while True:
         display.show()
         utime.sleep(1)
         line = None
-        error = "500"
         display_splash(display,"Borealis","v1.2.1")
         display_splash(display,username,money)
         mainloop()
