@@ -16,6 +16,7 @@ username = ""
 money = 0.00
 line = 1
 bindex = -1
+stats = None
 
 #FUNCTIONS
     #ABSTRACTION FUNCTIONS
@@ -174,11 +175,12 @@ def ACCOUNT():
 print("FEEDBACK Mode Activated")
 display = OLED_1inch3()
     #MAINLOOP
-def mainloop():
+def mainloop(apps):
     global b0,b1,bindex
     while True:
         display_splash_perm(display,"App Store","v0.0.1")
-        apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
+        if apps == None:
+            apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
         display_splash_perm(display,"App Store Online",len(apps)+" Apps")
         error = "500"
         while True:
@@ -211,10 +213,9 @@ while True:
         print("Connected")
         display_line1(display, "Connected")
         display.show()
-        error = "503"
+        line,error = "503",2
         username = getaccount()
         if username == None:
-            line = line + 1
             print("Getting Account")
             display_line2(display, "Getting Account")
             display.show()
@@ -234,24 +235,29 @@ while True:
             print(f"Account Synced (username: {username})")
             display_line2(display, "Account Synced")
             display.show()
-        line,error = line + 1,"503"
+        else:
+            print("Getting Apps")
+            display_line2(display, "Getting Apps")
+            display.show()
+            apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
+        line,error = 3,"503"
         print("Fetching Stats")
-        eval(f'display_line{line}(display, "Fetching Stats")')
+        display_line3(display, "Fetching Stats")
         display.show()
         money = get(f"/account?v=0&u={username}").split("\n\n")[0]
         if "Error 400" in money:
             print("Failed")
             error = "400"
             display_disconnected(display,line)
-        eval(f'display_line{line}(display, "Stats Fetched")')
+        display_line3(display, "Stats Fetched")
         display.show()
-        eval(f'display_line{line + 1}(display, "Booting...")')
+        display_line4(display, "Booting...")
         display.show()
         utime.sleep(1)
         line = None
         display_splash(display,"Borealis","v1.2.1")
         display_splash(display,username,money)
-        mainloop()
+        mainloop(stats)
         continue
     except Exception as e:
         print(e)
