@@ -95,9 +95,10 @@ def display_splash_perm(display,a,b):
     display.show()
 def display_disconnected(display,line):
     global error
-    eval(f'display_line{str(line)}(display, "Failed")')
-    display.show()
-    utime.sleep(1)
+    if line != None:
+        eval(f'display_line{str(line)}(display, "Failed")')
+        display.show()
+        utime.sleep(1)
     display_clear_all(display)
     display.rect(0, 0, 128, 64, display.white)
     display.text("  Disconnected  ", 0, 22, display.white)
@@ -184,6 +185,7 @@ def mainloop(apps):
             display.show()
             apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
         display_splash_perm(display,"App Store Online",len(apps)+" Apps")
+        line = None
         error = "500"
         while True:
             if b0.value() == 0 and b1.value() == 0:
