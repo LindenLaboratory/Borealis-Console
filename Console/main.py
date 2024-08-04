@@ -7,6 +7,7 @@ import micropython
 import network
 import urequests as requests
 import json
+import machine
 
 #SETUP
 b0 = Pin(15, Pin.IN, Pin.PULL_UP)
@@ -106,8 +107,9 @@ def display_disconnected(display,line):
     utime.sleep(0.1)
     display.show()
     while b0.value() == 1 and b1.value() == 1:
-        pass
         utime.sleep(0.5)
+    if b0.value() == 0 and b1.value() == 0:
+        machine.reset()
 def display_text(display,txt):
     display.clear()
     chunks = split_text(txt)
