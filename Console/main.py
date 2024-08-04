@@ -179,7 +179,7 @@ def mainloop():
     while True:
         display_splash_perm(display,"App Store","v0.0.1")
         apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
-        display_splash_perm(display,"App Store Online","")
+        display_splash_perm(display,"App Store Online",len(apps)+" Apps")
         error = "500"
         while True:
             if b0.value() == 0 and b1.value() == 0:
