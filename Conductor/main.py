@@ -12,7 +12,6 @@ import machine
 
 #SETUP
 addrlst = []
-accounts = []
 responses = []
 amounts = []
 money = ""
@@ -61,14 +60,6 @@ def execute(string):
         else:
             return "Command Adding Failed"
     
-    def account(dictionary):
-        if "account" in dictionary:
-            username = dictionary['account']
-            accounts[username] = addrlst[-1]
-            return "Account Connected"
-        else:
-            return "Account Connection Failed"
-    
     def edit(dictionary):
         try:
             if "edit" in dictionary:
@@ -89,8 +80,8 @@ def execute(string):
                 return "User Info Edit Failed"
         except:
             return "User Info Edit Failed"
+
     #ANALYSIS
-    account(dictionary)
     log(dictionary)
     command(dictionary)
     edit(dictionary)
