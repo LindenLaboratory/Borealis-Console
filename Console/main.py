@@ -95,10 +95,9 @@ def display_splash_perm(display,a,b):
     display.show()
 def display_disconnected(display,line):
     global error
-    if line != None:
-        eval(f'display_line{str(line)}(display, "Failed")')
-        display.show()
-        utime.sleep(1)
+    eval(f'display_line{str(line)}(display, "Failed")')
+    display.show()
+    utime.sleep(1)
     display_clear_all(display)
     display.rect(0, 0, 128, 64, display.white)
     display.text("  Disconnected  ", 0, 22, display.white)
@@ -178,8 +177,11 @@ display = OLED_1inch3()
 def mainloop(apps):
     global b0,b1,bindex
     while True:
-        display_splash_perm(display,"App Store","v0.0.1")
+        display_splash(display,"App Store","v0.0.1")
         if apps == None:
+            display.clear()
+            display_line1(display,"Getting Apps...")
+            display.show()
             apps = [app.replace(":.","\n") for app in get("/app/list").split("\n")]
         display_splash_perm(display,"App Store Online",len(apps)+" Apps")
         error = "500"
@@ -254,7 +256,7 @@ while True:
         display_line4(display, "Booting...")
         display.show()
         utime.sleep(1)
-        line = None
+        line = 1
         display_splash(display,"Borealis","v1.2.1")
         display_splash(display,username,money)
         mainloop(stats)
