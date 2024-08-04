@@ -200,7 +200,6 @@ def mainloop():
 while True:
     display_clear_all(display)
     try:
-        line = 1
         display_line1(display, "Connecting...")
         display.show()
         print("Connecting...")
@@ -211,9 +210,10 @@ while True:
         print("Connected")
         display_line1(display, "Connected")
         display.show()
-        line,error = 2,"503"
+        error = "503"
         username = getaccount()
         if username == None:
+            line = line + 1
             print("Getting Account")
             display_line2(display, "Getting Account")
             display.show()
@@ -230,30 +230,21 @@ while True:
             else:
                 with open("account.txt","w") as f:
                     f.write(username)
-        else:
-            print("Syncing Account")
-            display_line2(display,"Syncing Account")
+            print(f"Account Synced (username: {username})")
+            display_line2(display, "Account Synced")
             display.show()
-            response = send({"account":getaccount()})
-            if "Account Connection Failed" in response:
-                print("Failed")
-                error = "400"
-                display_disconnected(display,line)
-        print(f"Account Synced (username: {username})")
-        display_line2(display, "Account Synced")
-        display.show()
-        line,error = 3,"503"
+        line,error = line + 1,"503"
         print("Fetching Stats")
-        display_line3(display, "Fetching Stats")
+        eval(f'display_line{line}(display, "Fetching Stats")')
         display.show()
         money = get(f"/account?v=0&u={username}").split("\n\n")[0]
         if "Error 400" in money:
             print("Failed")
             error = "400"
             display_disconnected(display,line)
-        display_line3(display, "Stats Fetched")
+        eval(f'display_line{line}(display, "Stats Fetched")')
         display.show()
-        display_line4(display, "Booting...")
+        eval(f'display_line{line + 1}(display, "Booting...")')
         display.show()
         utime.sleep(1)
         line = None
