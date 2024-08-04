@@ -8,6 +8,7 @@ import _thread
 from machine import Pin
 import json
 import os
+import machine
 
 #SETUP
 addrlst = []
@@ -127,6 +128,8 @@ def terminate(seconds):
             for i in commands:
                 if "oscmd" in i:
                     commands.remove(i)
+        elif _.var() == True:
+            machine.reset()
         else:
             continue
         time.sleep(seconds)
@@ -226,11 +229,11 @@ def ap_mode(ssid, password):
                             py_path,txt_path = f"{UPLOAD_DIR}/{py_filename}",f"{UPLOAD_DIR}/list.txt"
                             try:
                                 with open(py_path, 'w') as f:
-                                    f.write(content)
+                                    f.write(content.lstrip())
                                 with open(txt_path,"a") as f:
-                                    f.write(description.replace("\n",":.")+"\n")
+                                    f.write(description.lstrip().rstrip().replace("\n",":.").replace("\r","")+"\n")
                                 print("Python file saved successfully",py_path)
-                                response = "Files uploaded successfully"
+                                response = "File uploaded successfully"
                             except OSError as e:
                                 print(f"Error saving Python file: {e}")
                                 response = "Error 500: File save error"
